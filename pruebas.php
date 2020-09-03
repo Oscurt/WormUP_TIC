@@ -6,7 +6,7 @@ require './base/vendor/autoload.php';
 $uri = "mongodb://localhost";
 $client = new MongoDB\Client($uri);
 $collection = $client->tics->pruebas->find();
-$simulaciones = array();
+$simulaciones = iterator_to_array($collection);
 
 ?>
 
@@ -31,7 +31,10 @@ $simulaciones = array();
 <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
 
 <?php
-  foreach($collection as $entry){
+$reverse= array_reverse($simulaciones);
+$cont=1;
+  foreach( $reverse as $entry){
+    if($cont<=10){
     $ID_simulacion = $entry["0"]['ID_simulacion'];
     $Horas_diarias_atencion = $entry["0"]['Horas_diarias_atencion'];
     $Num_periodos_tiempo = $entry["0"]['Num_periodos_tiempo'];
@@ -44,8 +47,8 @@ $simulaciones = array();
 ?>
 
 
-<button type="submit" class="btn-results" id="<?php echo $ID_simulacion ?>" value="<?php echo $entry["_id"] ?>" onclick="mostrarContenido(this)">
-    Mostrar <?php echo $ID_simulacion ?>
+<button type="submit" class="btn-results" value="<?php echo $entry["_id"] ?>" onclick="mostrarContenido(this)">
+    Mostrar <?php echo $entry["fecha"] ?>
   </button>
   
 
@@ -99,11 +102,11 @@ $simulaciones = array();
       </table>
       <br>
       <legend>Resultados de simulación <?php echo $ID_simulacion ?></legend>
+      <b>Tiempo total simulado: <?php echo $entry["0"]["Tiempo_total_simulado"] ?></b>
       <?php
         for($i = 1; $i <= $Num_periodos_tiempo; $i++){
       ?>
-        <div class="intervalos"><b>Intervalo número <?php echo $i ?></b><br>
-          <span class="intervalos-item">Tiempo total simulado: <?php echo $entry["${i}"]["Tiempo_total_simulado"] ?></span>
+      <div class="intervalos"><b>Intervalo número <?php echo $i ?></b><br>
           <span class="intervalos-item">Cantidad de clientes ingresados: <?php echo $entry["${i}"]["Cant_clientes_ingresados"] ?></span>
           <span class="intervalos-item">Cantidad de clientes despachados: <?php echo $entry["${i}"]["Cant_clientes_despachados"] ?></span>
           <span class="intervalos-item">Promedio de productos despachados: <?php echo $entry["${i}"]["Promedio_productos_despachados"] ?></span>
@@ -115,11 +118,12 @@ $simulaciones = array();
       }
     ?>
     </center><br><br><br>
-    <a href="http://ec2-54-157-167-58.compute-1.amazonaws.com/index.php?again=1&id=<?php echo $entry["_id"] ?>" type="submit">Nueva simulación cambiando valores</a>
+  
   </div>
 
 <?php
   }
+  $cont++;}
 ?>
 <footer>
 <script>
@@ -127,7 +131,7 @@ $simulaciones = array();
   function mostrarContenido(btnResults){
     let contenidoDiv = document.getElementById(btnResults.value);
     contenidoDiv.style.display = "block";
-    btnResults.innerHTML = "Ocultar " + btnResults.id;
+    btnResults.innerHTML = btnResults.innerHTML.replace("Mostrar", "Ocultar");
     btnResults.setAttribute("onclick", "ocultarContenido(this)");
   }
 
@@ -135,7 +139,7 @@ $simulaciones = array();
     let contenidoDiv = document.getElementById(btnResults.value);
     contenidoDiv.style.display = "none";
 
-    btnResults.innerHTML = "Mostrar" + btnResults.id;
+    btnResults.innerHTML = btnResults.innerHTML.replace("Ocultar", "Mostrar");
     btnResults.setAttribute("onclick", "mostrarContenido(this)");
   }
 </script>

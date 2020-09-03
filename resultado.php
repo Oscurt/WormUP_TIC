@@ -4,6 +4,10 @@ date_default_timezone_set('UTC');
 include_once "encabezado.php";
 date_default_timezone_set('America/Santiago');
 
+if(empty($_POST) || !isset($_POST)){
+    header('Location: ./index.php');
+}
+
 echo "<center><legend> Resultados de la simulación </legend><center><br>";
 
 class Cliente
@@ -82,6 +86,8 @@ class Fila
 }
 
 /* Funciones */
+
+
 
 function validar_clientes($Supermercado, $Cajas, $Cantidad_min_productos_Xclientes)
 {
@@ -169,7 +175,6 @@ function Disminuir_tiempo_en_supermercado($Supermercado)
 // $Tiempo_promedio_pago = 4;
 
 /* Parametros principales */
-
 $Horas_diarias_atencion = $_POST['Horas_diarias_atencion'];
 $Num_periodos_tiempo = $_POST['Num_periodos_tiempo'];
 $Numero_total_clientes_Xdia = $_POST['Numero_total_clientes_Xdia'];
@@ -192,6 +197,7 @@ $Tiempo_promedio_pago = $_POST['Tiempo_promedio_pago'];
 
 /* COMIENZO DE LA SIMULACION */
 $simulacion = array();
+$Tiempo_total_simulado = ($Horas_diarias_atencion * 60) / $Num_periodos_tiempo;
 
 array_push($simulacion, array(
     'Distribucion_porcentual_en_intervalos' => $Distribucion_porcentual_en_intervalos,
@@ -204,14 +210,15 @@ array_push($simulacion, array(
     'Cantidad_max_productos_Xclientes' => $_POST['Cantidad_max_productos_Xclientes'],
     'Tiempo_promedio_seleccion_Xproducto' => $_POST['Tiempo_promedio_seleccion_Xproducto'],
     'Tiempo_promedio_despacho_Xproducto' => $_POST['Tiempo_promedio_despacho_Xproducto'],
-    'Tiempo_promedio_pago' => $_POST['Tiempo_promedio_pago']
+    'Tiempo_promedio_pago' => $_POST['Tiempo_promedio_pago'],
+    'Tiempo_total_simulado' => $Tiempo_total_simulado
 ));
+
+echo "<b>Tiempo total simulado: ".$Tiempo_total_simulado." minutos.</b></br>";
 
 for ($intervalo = 0; $intervalo < $Num_periodos_tiempo; $intervalo++) {
 
     /* Parametros a calcular */
-
-    $Tiempo_total_simulado = ($Horas_diarias_atencion * 60) / $Num_periodos_tiempo;
 
     $Cant_clientes_ingresados = $Distribucion_porcentual_en_intervalos[$intervalo] * ($Numero_total_clientes_Xdia / 100);
     $Cant_clientes_despachados = 0;
@@ -253,6 +260,8 @@ for ($intervalo = 0; $intervalo < $Num_periodos_tiempo; $intervalo++) {
         // Desencolar:
         Desencolar($Cajas);
     }
+
+    
 
     /* Calculo de Resultados: */
 
@@ -298,9 +307,7 @@ for ($intervalo = 0; $intervalo < $Num_periodos_tiempo; $intervalo++) {
     // Transforma a variable entera:
     $Promedio_productos_despachados = (int)  $Promedio_productos_despachados;
     $Promedio_clientes_esperando_en_colas_de_cajas = (int) $Promedio_clientes_esperando_en_colas_de_cajas;
-
     echo "<div class=\"intervalos\"><b> Intervalo número ", ($intervalo + 1), ":", "</b><br>";
-    echo "<span class=\"intervalos-item\">Tiempo total simulado : ", $Tiempo_total_simulado, "</span>";
     echo "<span class=\"intervalos-item\"> Cantidad de clientes ingresados : ", $Cant_clientes_ingresados, "</span>";
     echo "<span class=\"intervalos-item\"> Cantidad de clientes despachados : ", $Cant_clientes_despachados, "</span>";
     echo "<span class=\"intervalos-item\"> Promedio de productos despachados : ", $Promedio_productos_despachados, "</span>";
@@ -311,7 +318,6 @@ for ($intervalo = 0; $intervalo < $Num_periodos_tiempo; $intervalo++) {
     /* Traspaso de información a Mongodb: */
     array_push($simulacion, array(
         "Intervalo" => $intervalo + 1,
-        "Tiempo_total_simulado" => $Tiempo_total_simulado,
         "Cant_clientes_ingresados" => $Cant_clientes_ingresados,
         "Cant_clientes_despachados" => $Cant_clientes_despachados,
         "Promedio_productos_despachados" => $Promedio_productos_despachados,
@@ -321,7 +327,6 @@ for ($intervalo = 0; $intervalo < $Num_periodos_tiempo; $intervalo++) {
 }
 $date =  date("Y-m-d H:i:s");
 $simulacion['fecha'] = $date;
-
 $uri = 'mongodb://localhost';
 $client = new MongoDB\Client($uri);
 $db = $client->tics->pruebas;
@@ -379,7 +384,7 @@ $db->insertOne($simulacion);
                         <td><input type="number" min="10" step="1" id="periodos" name="Num_periodos_tiempo" pattern="[0-9]" value="<?php echo $Num_periodos_tiempo ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
-                        <td><input type="number" min="1" step="1" id="clientesesp" name="Numero_total_clientes_Xdia" pattern="[0-9]" value="<?php echo $Numero_total_clientes_Xdia ?>"><br>
+                        <td><input type="number" min="1" step="1" id="clientesesp" max="10000" name="Numero_total_clientes_Xdia" pattern="[0-9]" value="<?php echo $Numero_total_clientes_Xdia ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
 
@@ -398,16 +403,16 @@ $db->insertOne($simulacion);
                     </tr>
                     <tr>
 
-                        <td><input type="number" min="1" id="minimos" name="Cantidad_min_productos_Xclientes" step="1" pattern="[0-9]" value="<?php echo $Cantidad_min_productos_Xclientes ?>"><br>
+                        <td><input type="number" min="0" id="minimos" name="Cantidad_min_productos_Xclientes" step="1" pattern="[0-9]" value="<?php echo $Cantidad_min_productos_Xclientes ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
-                        <td><input type="number" min="1" id="maximos" name="Cantidad_max_productos_Xclientes" step="1" pattern="[0-9]" value="<?php echo $Cantidad_max_productos_Xclientes ?>"><br>
+                        <td><input type="number" min="1" max="1000" id="maximos" name="Cantidad_max_productos_Xclientes" step="1" pattern="[0-9]" value="<?php echo $Cantidad_max_productos_Xclientes ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
-                        <td><input type="number" min="0.1" id="productos" name="Tiempo_promedio_seleccion_Xproducto" step="0.1" value="<?php echo $Tiempo_promedio_seleccion_Xproducto ?>"><br>
+                        <td><input type="number" min="0.1" max="3600" id="productos" name="Tiempo_promedio_seleccion_Xproducto" step="0.1" value="<?php echo $Tiempo_promedio_seleccion_Xproducto ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
-                        <td><input type="number" min="0.1" id="marcado" name="Tiempo_promedio_despacho_Xproducto" step="0.1" value="<?php echo $Tiempo_promedio_despacho_Xproducto ?>"><br>
+                        <td><input type="number" min="0.1" max="3600" id="marcado" name="Tiempo_promedio_despacho_Xproducto" step="0.1" value="<?php echo $Tiempo_promedio_despacho_Xproducto ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
 
@@ -423,7 +428,7 @@ $db->insertOne($simulacion);
                     </tr>
                     <tr>
 
-                        <td><input type="number" min="0.1" id="pago" name="Tiempo_promedio_pago" step="0.1" value="<?php echo $Tiempo_promedio_pago ?>"><br>
+                        <td><input type="number" min="0.1" max="3600" id="pago" name="Tiempo_promedio_pago" step="0.1" value="<?php echo $Tiempo_promedio_pago ?>"><br>
                             <p id="minMessage">Tienes que escribir algo bro</p>
                         </td>
 
@@ -435,23 +440,23 @@ $db->insertOne($simulacion);
                 <table border="2" id="tabla_intervalos" style="width:67.5%;text-align:center;">
                     <tr>
                         <th><label for="Intervalo">Numero intervalo</label></th>
-                        <th><label for="distribución porcentual">Distribución procentual de clientes (total 100%)</label></th>
+                        <th><label for="distribución porcentual">Distribución porcentual de clientes (total 100%)</label></th>
                         <th><label for="cajas abiertas">Cajas abiertas</label></th>
 
                     </tr>
                     <?php
 
-                    for ($i = 1; $i <= 10; $i++) {
+                    for ($i = 1; $i <= $Num_periodos_tiempo; $i++) {
                     ?>
                         <tr id="tr_inputs<?php echo $i ?>">
 
                             <td>
                                 <h5><?php echo $i; ?></h5>
                             </td>
-                            <td><input type="number" min="0.1" id="distribucion<?php echo $i; ?>" name="distribucion<?php echo $i; ?>" step="0.1" value="<?php echo $Distribucion_porcentual_en_intervalos[$i - 1] ?>"><br>
+                            <td><input type="number" min="0" max="100" id="distribucion<?php echo $i; ?>" name="distribucion<?php echo $i; ?>" step="0.1" value="<?php echo $Distribucion_porcentual_en_intervalos[$i - 1] ?>"><br>
                                 <p id="minMessage">Tienes que escribir algo bro</p>
                             </td>
-                            <td><input type="number" min="1" id="cajas<?php echo $i; ?>" name="cajas<?php echo $i; ?>" step="1" pattern="[0-9]" value="<?php echo $Cajas_abiertas_en_intervalos[$i - 1] ?>"><br>
+                            <td><input type="number" min="1" max="100" id="cajas<?php echo $i; ?>" name="cajas<?php echo $i; ?>" step="1" pattern="[0-9]" value="<?php echo $Cajas_abiertas_en_intervalos[$i - 1] ?>"><br>
                                 <p id="minMessage">Tienes que escribir algo bro</p>
                             </td>
 
@@ -478,7 +483,7 @@ $db->insertOne($simulacion);
     </form>
 
     <script>
-        let contadorIntervalos = 10;
+        let contadorIntervalos = parseInt(document.getElementById("periodos").value);
 
         function agregarIntervalo() {
             contadorIntervalos++;
@@ -500,17 +505,19 @@ $db->insertOne($simulacion);
 
             let newInput1 = document.createElement("input");
             newInput1.type = "number";
-            newInput1.min = 0.1;
+            newInput1.min = "0";
+            newInput1.max = "100";
             newInput1.id = "distribucion" + contadorIntervalos;
             newInput1.name = "distribucion" + contadorIntervalos;
-            newInput1.step = 0.1;
+            newInput1.step = "0.1";
 
             let newInput2 = document.createElement("input");
             newInput2.type = "number";
-            newInput2.min = 1;
+            newInput2.min = "1";
+            newInput1.max = "100";
             newInput2.id = "cajas" + contadorIntervalos;
             newInput2.name = "cajas" + contadorIntervalos;
-            newInput2.step = 0.1;
+            newInput2.step = "1";
             newInput2.pattern = "[0-9]";
 
 
@@ -532,8 +539,7 @@ $db->insertOne($simulacion);
             if (contadorIntervalos > 10) {
                 let tablaIntervalos = document.getElementById("tabla_intervalos");
                 let auxName = "tr_inputs" + contadorIntervalos;
-                let ultimoTrInputs = document.getElementById(auxName);
-                tablaIntervalos.removeChild(ultimoTrInputs);
+                document.getElementById(auxName).remove();
                 contadorIntervalos--;
             }
         }
@@ -545,15 +551,13 @@ $db->insertOne($simulacion);
                 let maximos = document.getElementById("maximos");
                 let minimos = document.getElementById("minimos");
 
-                console.log(minimos);
-
                 for (let i = 1; i <= contadorIntervalos; i++) {
                     let distribucion = document.getElementById(`distribucion${i}`);
-                    sumaPorcentajes += parseFloat(distribucion.value);
+                    sumaPorcentajes += parseInt(distribucion.value);
                 }
 
 
-                if (sumaPorcentajes !== 100) {
+                if (sumaPorcentajes != 100) {
                     alert("El total de la distribución porcentual de clientes debe ser 100%.");
                     return false;
                 } else if (periodos.value != contadorIntervalos) {

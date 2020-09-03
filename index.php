@@ -1,6 +1,7 @@
 <?php
     include_once "encabezado.php";
     session_start();
+    session_destroy();
 ?>
 <style>
         #minMessage {
@@ -34,7 +35,7 @@ $(document).ready(function(){
         <label for="Periodos">Ingrese periodos de tiempo</label>
         <td><input type="number" min="10" max="50" step="1" id="periodos" name="periodos" pattern="[0-9]"><br>
             <p id="minMessage">Tienes que escribir algo bro</p>
-        </td><br><br>
+        </td><br>
         <input type="submit" value="Siguiente" name="enviar" id="enviar">
     </form>
 

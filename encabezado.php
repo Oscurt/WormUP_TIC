@@ -30,8 +30,8 @@
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
     <div class="navbar-nav">
       <a class="nav-link active" href="/index.php">Ingresar prueba</a>
-      <a class="nav-link active" href="/pruebas.php">Ver pruebas anteriores</a>
-      <a class="nav-link active" href="https://github.com/Oscurt/WormUP_TIC">Ver programación</a>
+      <a class="nav-link active" href="/pruebas.php">Historial</a>
+      <a class="nav-link active" href="https://github.com/Oscurt/WormUP_TIC">Repositorio</a>
     </div>
   </div>
 </nav>
