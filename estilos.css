@@ -1,0 +1,37 @@
+.results-container{
+    display: flex;
+    flex-flow: column;
+    align-content: center;
+    justify-items: center;    
+}
+
+.intervalos{
+    text-align: center;
+}
+
+.intervalos-item{
+    display: block;
+}
+
+.no-mostrar > *{
+    display: none; 
+}
+
+.btn-results{
+    border: 2px solid black;
+    display: block;
+    background-color: rgb(82, 146, 199);
+    margin: 20px auto 20px auto;
+    color: white;
+    font-weight: bolder;
+    width: 30%;
+    height: 100px;
+    text-align: center;
+    line-height: 6em ;
+}
+
+.btn-results:hover{
+    background-color: rgb(10, 83, 131);
+    transition-property: all;
+    transition-duration: 400ms;
+}
